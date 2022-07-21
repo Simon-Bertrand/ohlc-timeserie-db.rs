@@ -8,10 +8,10 @@ It focuses on multidimensionnal data sampled with a specific frequency, where ea
 Samples are defined as a struct : <br />
 <ul>
             <li>ts: i64 - timestamp (s) of current sample</li>
-            <li>o : Option<Decimal> - open price <i>(random reference asset / random asset. Ex: EUR/USD)</i></li>
-            <li>h : Option<Decimal> - high price</li>
-            <li>c : Option<Decimal> - close price</li>
-            <li>l : Option<Decimal> - low price</li>
+            <li>o : Option(Decimal) - open price <i>(random reference asset / random asset. Ex: EUR/USD)</i></li>
+            <li>h : Option(Decimal) - high price</li>
+            <li>c : Option(Decimal) - close price</li>
+            <li>l : Option(Decimal) - low price</li>
 </ul>
 
 
