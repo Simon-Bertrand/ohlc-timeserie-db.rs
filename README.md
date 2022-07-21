@@ -16,11 +16,9 @@ Samples are defined as a struct : <br />
 
 
 <h3>Rules</h3>
--A null sample can sees its data null but its timestamp cannot be undefined. The null state for a sample is defined without an empty timestamp.
-
--Each inserted sample n2 after a sample n1, even if null, has to verify the fact ts2-ts1 = DEFAULT_STEP. Where DEFAULT_STEP is equal to <b>te</b>.
-
--Each binary block has a maximum number of write samples. Once exceeded, a new bloc is created.
+-A null sample can sees its data null but its timestamp cannot be undefined. The null state for a sample is defined without an empty timestamp.<br />
+-Each inserted sample n2 after a sample n1, even if null, has to verify the fact ts2-ts1 = DEFAULT_STEP. Where DEFAULT_STEP is equal to <b>te</b>.<br />
+-Each binary block has a maximum number of write samples. Once exceeded, a new bloc is created.<br />
 
 <h3>Encoding / Compression</h3>
 
