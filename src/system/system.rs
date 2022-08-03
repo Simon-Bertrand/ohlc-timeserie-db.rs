@@ -1,5 +1,7 @@
 use std::{ops::Index, ffi::OsString, collections::HashMap};
 use crate::filemanager::FileManager;
+use crate::inoutputs::InOutputs;
+use crate::tspoint::TsPoint;
 use crate::{ source::Source, channel::Channel};
 
 
@@ -30,8 +32,38 @@ impl System {
      let mut _i =0;
      let _b : &mut Collection =  sys.sources.get_mut(&OsString::from("Binance")).unwrap().colecs.get_mut(&OsString::from("BTCUSDT")).unwrap();
     }
+
 }
-        
+
+
+impl System {
+    fn inject_data_core<T>(&mut self, source : &str, collection : &str, data: T, parser : fn(T) -> Vec<TsPoint>) {
+        let mut inserted_counts = 0;
+        let c = self.sources.get_mut(&OsString::from(source)).expect("Source does not exist").get_mut(collection).expect("Collection does not exist");
+        c.append_points(&parser(data), &mut false, &mut inserted_counts).expect("Adding points failed");
+        println!("Inserted points : {}", inserted_counts);
+    }
+
+    pub fn inject_data_from_string(&mut self, source : &str, collection : &str, data: &str) {
+        self.inject_data_core(source,collection,data, InOutputs::JsonToTsPoints)
+    }
+    pub fn inject_data_from_points(&mut self, source : &str, collection : &str, data: Vec<TsPoint>) {
+        self.inject_data_core(source,collection,data, |x| x)
+    }
+} 
+
+
+
+
+impl System {
+    pub fn query_data(&mut self, source : &str, collection : &str, batch_id: &u64) -> Vec<TsPoint> {
+        let c = self.sources.get_mut(&OsString::from(source)).expect("Source does not exist").get_mut(collection).expect("Collection does not exist");
+        c.map.get_data(*batch_id,1)
+    }
+}  
+
+
+
 
 impl Index<&str> for System {
     type Output = Source;

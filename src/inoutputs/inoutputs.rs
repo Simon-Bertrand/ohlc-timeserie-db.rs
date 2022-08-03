@@ -37,7 +37,7 @@ impl InOutputs {
         }).collect::<Vec<TsPoint>>()
     }
 
-    pub fn PointsToJson(points: &Vec<TsPoint>) -> String {
+    pub fn PointsToJson(points: &[TsPoint]) -> String {
         serde_json::to_string({
             &points.iter().map(|point| {
                 return SerializerTsPoint { t : point.t,  o :point.data.o, h:point.data.h, c:point.data.c, l:point.data.l }
