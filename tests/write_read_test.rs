@@ -40,7 +40,7 @@
     // Refresh the FileManager from the system
     sys.files.refresh_db_repo();
 
-    assert_eq!(gen_data.len(),inserted_count.try_into().unwrap() , "Length test for generated and written data");
+    assert_eq!((gen_data.len() as u32)==inserted_count.to_owned(),true, "Length test for generated and written data");
 
 
     //Read the data 

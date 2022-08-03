@@ -31,7 +31,7 @@ impl EncodeMap {
     pub fn serialize(bytes : &[u8]) -> Vec<TsPointDataRaw> {
         let mut res : Vec<TsPointDataRaw> = Vec::new();
         let mut byteslines_iter = bytes.split(|x| x == &EncodeMap::char_to_bytes(&'*').expect("deserializer - End character * not found"))
-        .filter(|x| **x != [] );
+        .filter(|x| x.len() != 0 );
         while let Some(bytesline) = byteslines_iter.next() {
                 let mut bytesvalue_iter = bytesline.split(|x| x == &EncodeMap::char_to_bytes(&';').expect("deserializer - Separator character ; not found"));
                 res.push(TsPointDataRaw{

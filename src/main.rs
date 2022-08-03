@@ -1,6 +1,6 @@
 use std::{ffi::OsString};
 
-use timeseries_database::{system::System, collection::Collection};
+use timeseries_database::{system::System, collection::Collection, inoutputs::InOutputs};
 
 
 fn main() {
@@ -8,10 +8,18 @@ fn main() {
     let now = Instant::now();
 
     
-    let mut sys = System::instanciate();
-    let _c : &mut Collection =  sys.sources.get_mut(&OsString::from("TEST")).unwrap().colecs.get_mut(&OsString::from("TEST")).unwrap();
+    // let mut sys = System::instanciate();
+    // let _c : &mut Collection =  sys.sources.get_mut(&OsString::from("TEST")).unwrap().colecs.get_mut(&OsString::from("TEST")).unwrap();
    
-    System::main();
+    // System::main();
+
+    println!("parsed result : {:?}" ,InOutputs::JsonToTsPoints(r#"[{"t":15, "o":15, "h":158000, "l":512, "c":15 }, {"t":11, "o":15, "h":158000, "l":512, "c":15 }]"#) );
+    println!("readed result : {}" , InOutputs::PointsToJson(&InOutputs::JsonToTsPoints(r#"[{"t":15, "o":15, "h":158000, "l":512, "c":15 }, {"t":11, "o":15, "h":158000, "l":512, "c":15 }]"#)));
+
+
+
+
+
     let elapsed = now.elapsed();
     println!("_______________________________");
     println!("Elapsed: {:.2?}", elapsed);

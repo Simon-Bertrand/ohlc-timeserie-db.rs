@@ -8,6 +8,7 @@ pub mod filemanager;
 pub mod schemaurl;
 pub mod tspoint;
 pub mod channel;
+pub mod inoutputs;
 
 
 

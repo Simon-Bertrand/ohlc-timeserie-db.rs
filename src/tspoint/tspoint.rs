@@ -1,11 +1,12 @@
 use std::str::FromStr;
 
 use rust_decimal::Decimal;
+use serde::{Deserialize, Serialize};
 use crate::encodemap::EncodeMap;
 
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct TsPoint {
     pub t: u64,
     pub data : TsPointData
@@ -38,7 +39,7 @@ pub struct TsPointDataRaw<'a>{
 
 
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug,Serialize, Deserialize, PartialEq)]
 pub struct TsPointData{
     pub o:Option<Decimal>,
     pub h:Option<Decimal>,
