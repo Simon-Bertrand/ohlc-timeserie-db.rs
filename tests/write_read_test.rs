@@ -44,7 +44,7 @@
 
 
     //Read the data 
-    let readed_data_all_batchs = colec.map.get_data(1, (n_blocs*MAX_LINE_BLOC)/BATCH_SIZE +1);
+    let readed_data_all_batchs = colec.map.get_data(&1, &((n_blocs*MAX_LINE_BLOC)/BATCH_SIZE +1));
 
 
     //Testing if written and generated data are different
@@ -55,7 +55,7 @@
 
     let mut readed_data_per_batch : Vec<TsPoint> = Vec::new();
     colec.map.pos.keys().into_iter().for_each(|batch_id| {
-        readed_data_per_batch.append(&mut colec.map.get_data(*batch_id, 1));
+        readed_data_per_batch.append(&mut colec.map.get_data(batch_id, &1));
     });
 
      //Testing if written and generated data are different

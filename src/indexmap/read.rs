@@ -8,8 +8,8 @@ use super::IndexMap;
 
 
 impl IndexMap {
-    pub fn get_positions(&self, batch_id : u64, take : u64) -> Vec<(u64,PathBuf)> {
-        (0..take).filter(|x| (*x as u64)   <= self.get_virtual_n_samples() / BATCH_SIZE +1)
+    pub fn get_positions(&self, batch_id : &u64, take : &u64) -> Vec<(u64,PathBuf)> {
+        (0..*take).filter(|x| (*x as u64)   <= self.get_virtual_n_samples() / BATCH_SIZE +1)
         .into_iter()
             .map(|shift| {
                 let mut colec_path = self.path.clone();
@@ -33,7 +33,7 @@ impl IndexMap {
 
 
 
-    pub fn get_data(&self, batch_id : u64, take : u64) -> Vec<TsPoint> {
+    pub fn get_data(&self, batch_id : &u64, take : &u64) -> Vec<TsPoint> {
         let positions = self.get_positions(batch_id,take);
             let mut uncompress_data : Vec<u8> = Vec::new();
             positions.iter().for_each(|(position_file, path_to_blocfile)| {

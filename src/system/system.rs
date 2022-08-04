@@ -1,5 +1,7 @@
 use std::{ops::Index, ffi::OsString, collections::HashMap};
+use crate::BATCH_SIZE;
 use crate::filemanager::FileManager;
+use crate::indexresult::TsIndexConverter;
 use crate::inoutputs::InOutputs;
 use crate::tspoint::TsPoint;
 use crate::{ source::Source, channel::Channel};
@@ -56,9 +58,14 @@ impl System {
 
 
 impl System {
-    pub fn query_data(&mut self, source : &str, collection : &str, batch_id: &u64) -> Vec<TsPoint> {
-        let c = self.sources.get_mut(&OsString::from(source)).expect("Source does not exist").get_mut(collection).expect("Collection does not exist");
-        c.map.get_data(*batch_id,1)
+    pub fn query_data(&'static self, query_string : &str) -> String {
+        let index_result = TsIndexConverter::parseQueryString(&self, query_string);
+        InOutputs::PointsToJson({
+            &index_result
+            .colec
+            .map
+            .get_data(&index_result.start_batchid, &(&index_result.end_batchid - &index_result.start_batchid))[(index_result.start_shift as usize)..(index_result.end_indice as usize)]
+        })
     }
 }  
 

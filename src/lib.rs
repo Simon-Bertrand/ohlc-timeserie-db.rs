@@ -9,7 +9,7 @@ pub mod schemaurl;
 pub mod tspoint;
 pub mod channel;
 pub mod inoutputs;
-pub mod tsindexconverter;
+pub mod indexresult;
 
 
 
