@@ -1,7 +1,10 @@
 use std::{ops::Index, ffi::OsString, collections::HashMap};
+use regex::Regex;
+
 use crate::BATCH_SIZE;
 use crate::filemanager::FileManager;
-use crate::indexresult::TsIndexConverter;
+use crate::helpers::Helpers;
+use crate::indexresult::{IndexResult};
 use crate::inoutputs::InOutputs;
 use crate::tspoint::TsPoint;
 use crate::{ source::Source, channel::Channel};
@@ -58,16 +61,91 @@ impl System {
 
 
 impl System {
-    pub fn query_data(&'static self, query_string : &str) -> String {
-        let index_result = TsIndexConverter::parseQueryString(&self, query_string);
+    pub fn query_data(&self, query_string : &str) -> String {
+        let index_result = self.parseQueryString( query_string);
         InOutputs::PointsToJson({
             &index_result
             .colec
             .map
-            .get_data(&index_result.start_batchid, &(&index_result.end_batchid - &index_result.start_batchid))[(index_result.start_shift as usize)..(index_result.end_indice as usize)]
+            .get_data(&index_result.start_batchid, &(&index_result.end_batchid - &index_result.start_batchid))[(index_result.start_ind as usize)..(index_result.end_ind as usize)]
         })
     }
 }  
+
+
+
+impl System {
+    pub fn parseQueryString(&self, queryString : &str) -> IndexResult {
+        let re = Regex::new(r"^(ts|batch) ([:0-9a-zA-Z]+)").unwrap();
+        let caps = re.captures_iter(queryString).nth(0).expect("Invalid query string. Need to start by ts or batch");
+        match &caps[1] {
+            "ts" => {
+                self.parseByTimestampQueryString(queryString)
+            },
+            "batch" => {
+                self.parseByBatchIdQueryString(queryString)
+            },
+            _ => {panic!("Unrecognized start of query string")}
+        }   
+    }
+
+
+
+
+    fn parseByBatchIdQueryString(&self, queryString : &str) -> IndexResult {
+        let re = Regex::new(r"([a-zA-Z]+):([a-zA-Z]+)::([1-9][0-9]*)").unwrap();
+        let caps = re.captures_iter(queryString).nth(0).expect("Invalid query string by timestamp");
+        let source = self.sources.get_key_value(&OsString::from(&caps[1])).expect("Source is not existing");
+        let colec = source.1.colecs.get_key_value(&OsString::from(&caps[2])).expect("Collection is not existing");
+        let batchid= caps[3].parse::<u64>().expect("Could not parse correctly the batchId value");
+        match (batchid>=1, batchid<=colec.1.map.get_virtual_n_samples()/BATCH_SIZE+1 ){
+            (true, true,) => {
+                IndexResult::create(&batchid,&0,&BATCH_SIZE,& (batchid+1), colec.1)
+            },
+            (false, _,) => {panic!("Batch id is not superior to 1")},
+            (_, false) => {panic!("Batch id is superior to the max batchid")}
+        }
+    }
+
+
+    fn parseByTimestampQueryString(&self, queryString : &str) -> IndexResult {
+
+        let re = Regex::new(r"([a-zA-Z]+):([a-zA-Z]+)::([1-9][0-9]*):([1-9][0-9]*)").unwrap();
+        let caps = re.captures_iter(queryString).nth(0).expect("Invalid query string by timestamp");
+        let source = self.sources.get(&OsString::from(&caps[1])).expect("Source is not existing");
+        let colec = source.get(&caps[2]).expect("Collection is not existing");
+        let mut start_ts= caps[3].parse::<u64>().expect("Could not parse correctly the startTs value");
+        let mut end_ts = caps[4].parse::<u64>().expect("Could not parse correctly the endTs value");
+
+        match (start_ts<end_ts , colec.map.mints<=end_ts , colec.map.maxts>=start_ts ){
+            (true, true, true) => {
+
+                start_ts = Helpers::u64closest_down_divider(&start_ts, &colec.map.step);
+                let x1 = Helpers::u64overflowed_substract(&start_ts,&colec.map.mints,&0)/colec.map.step;
+                let batch_inferior = x1/BATCH_SIZE;
+
+                end_ts = Helpers::u64closest_up_divider(&end_ts, &colec.map.step);
+                let x2 = Helpers::u64overflowed_rangefit(&0,&(colec.map.maxts-colec.map.mints), &(end_ts-colec.map.mints))/colec.map.step;
+                let batch_superior = x2/BATCH_SIZE +1;
+
+                IndexResult::create(&(batch_inferior+1),&(x1 - batch_inferior),&x2,&(batch_superior+1), colec)
+            
+            },
+            (false, _, _) => {panic!("Start ts is not superior to end ts")},
+            (_, false, _) => {panic!("End ts is inferior to the min timestamp of collection")},
+            (_, _, false) => {panic!("Start ts is superior to the max timestamp of collection")}
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
 
 
 
