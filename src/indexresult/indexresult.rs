@@ -10,6 +10,7 @@ use super::Aggregator;
 // }
 
 
+
 pub struct IndexResult<'a> {
     pub start_batchid : u64,
     pub start_ind : u64,

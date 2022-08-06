@@ -9,7 +9,7 @@ use crate::helpers::Helpers;
 
 use crate::indexresult::{IndexResult, Aggregator};
 use crate::inoutputs::InOutputs;
-use crate::tspoint::{TsPoint, TsPointData, TsPointAggregated};
+use crate::tspoint::{TsPoint, TsPointData};
 use crate::{ source::Source, channel::Channel};
 
 
@@ -64,49 +64,53 @@ impl System {
 
 
 impl System {
-    pub fn query_data(&self, query_string : &str) -> String {
-        let index_result = self.parseQueryString( query_string);
-        InOutputs::PointsToJson({
-            &index_result
-            .colec
-            .map
-            .get_data(&index_result.start_batchid, &(&index_result.end_batchid - &index_result.start_batchid))[(index_result.start_ind as usize)..(index_result.end_ind as usize)]
-        })
-    }
+    // pub fn query_data(&self, query_string : &str) -> String {
+    //     let index_result = self.parseQueryString( query_string);
+    //     InOutputs::PointsToJson({
+    //         &index_result
+    //         .colec
+    //         .map
+    //         .get_data(&index_result.start_batchid, &(&index_result.end_batchid - &index_result.start_batchid))[(index_result.start_ind as usize)..(index_result.end_ind as usize)]
+    //     })
+    // }
 }  
 
 
 
 impl System {
 
-    fn useIndexResult(&self, ir : &'static IndexResult) -> Vec<TsPointAggregated>{
+
+    pub fn query_data(&self, queryString : &str) -> Vec<TsPoint> {
+        self.useIndexResult(&self.parseQueryString(queryString)).1
+    }
+    fn useIndexResult(&self, ir : &IndexResult) -> (u64, Vec<TsPoint>){
         match &ir.aggregator {
             Some(agreg) => {
-                ir.colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))
+                println!("agreg width {}", agreg.width);
+                println!("ir.colec.map.step {}", ir.colec.map.step);
+                println!("ir.end_batchid {}", ir.end_batchid);
+                println!("ir.start_batchid {}", ir.start_batchid);
+                (agreg.width*ir.colec.map.step, ir.colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))
                 .into_iter()
                 .enumerate()
                 .filter(|(i,x)| i>=&(ir.start_ind as usize) && i<&(ir.end_ind as usize)).map(|(x,y)| y)
                 .collect::<Vec<TsPoint>>()
                 .chunks(agreg.width as usize)
                 .map(|x|agreg.aggregate(x))
-                .collect::<Vec<TsPointAggregated>>()
+                .collect::<Vec<TsPoint>>())
             }, 
             None => {
-                ir.colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))
+                (ir.colec.map.step, ir.colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))
                 .into_iter()
                 .enumerate()
                 .filter(|(i,x)| i>=&(ir.start_ind as usize) && i<&(ir.end_ind as usize)).map(|(x,y)| y)
-                .map(|x|TsPointAggregated {
-                    step : ir.colec.map.step,
-                    point : x
-                })
-                .collect::<Vec<TsPointAggregated>>()
+                .collect::<Vec<TsPoint>>())
             }
         }
       
     }
 
-    pub fn parseQueryString(&self, queryString : &str) -> IndexResult {
+    fn parseQueryString(&self, queryString : &str) -> IndexResult {
         let re = Regex::new(r"^(ts|batch)((?:\s-[0-9a-zA-Z]+)?) ([:0-9a-zA-Z]+)$").unwrap();
         let caps = re.captures_iter(queryString).nth(0).expect("Invalid query string. Need to start by ts or batch");
         match (&caps[1], &caps[2]) {
@@ -118,7 +122,7 @@ impl System {
                 self.batch_query_string_to_indexresult(&caps[3])
             },
             ("ts", arg) => {
-                self.agg_ts_query_string_to_indexresult(&caps[3], Aggregator::ohlc(&16))
+                self.agg_ts_query_string_to_indexresult(&caps[3], Aggregator::ohlc(&1))
             }
             _ => {panic!("Unrecognized start of query string")}
         }   
@@ -133,17 +137,15 @@ impl System {
         let colec = source.get(&caps[2]).expect("Collection is not existing");
         let mut start_ts= caps[3].parse::<u64>().expect("Could not parse correctly the startTs value");
         let mut end_ts = caps[4].parse::<u64>().expect("Could not parse correctly the endTs value");
-
-
         match (start_ts<end_ts , colec.map.mints<=end_ts , colec.map.maxts>=start_ts ){
             (true, true, true) => {
 
     
-                start_ts = Helpers::u64closest_down_divider(&start_ts, &(agg.width*colec.map.step));
+                start_ts = Helpers::u64closest_down_divider(&start_ts, &(colec.map.step));
                 let x1 = Helpers::u64overflowed_substract(&start_ts,&colec.map.mints,&0)/colec.map.step;
                 let batch_inferior = x1/BATCH_SIZE;
 
-                end_ts = Helpers::u64closest_up_divider(&end_ts, &(agg.width*colec.map.step));
+                end_ts = Helpers::u64closest_up_divider(&end_ts, &(colec.map.step));
                 let x2 = Helpers::u64overflowed_rangefit(&0,&(colec.map.maxts-colec.map.mints), &(end_ts-colec.map.mints))/colec.map.step;
                 let batch_superior = x2/BATCH_SIZE +1;
 

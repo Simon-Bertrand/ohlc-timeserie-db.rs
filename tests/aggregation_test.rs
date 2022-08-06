@@ -1,5 +1,5 @@
 
-    use std::{ffi::OsString, fs};
+    use std::{ffi::OsString, fs, cmp::{min, max}};
     use rand::{prelude::*};
 
 
@@ -7,7 +7,7 @@
     use rust_decimal::{Decimal, prelude::FromPrimitive};
 
     #[test]
-    fn query_string_test() {
+    fn aggregation_test() {
 
     // Clean the collection TEST if exists and create a new one
     match Collection::create(&OsString::from("TEST"), &OsString::from("TEST")) {
@@ -51,33 +51,15 @@
     //Query string data
 
     let mut rng = rand::thread_rng();
-    rng.gen_range(1..(MAX_LINE_BLOC*n_blocs + remainder + 1)/2);
 
+    let r1 = rng.gen_range(colec.map.mints..colec.map.maxts);
+    let r2 = rng.gen_range(colec.map.mints..colec.map.maxts);
+    let bot_ts =  min(r1,r2);
+    let top_ts = max(r1,r2);
 
-    let bot_ts =  colec.map.step * rng.gen_range(1..(MAX_LINE_BLOC*n_blocs + remainder + 1)/2);
-    let top_ts = bot_ts + rng.gen_range(1..(12*BATCH_SIZE));
-    // let ir = sys.parseQueryString(&format!("ts TEST:TEST::{}:{}", bot_ts, top_ts));
-    // let res_data_ref = &colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))[(ir.start_ind as usize)..(ir.end_ind as usize)];
-    let res_data_ref = &sys.query_data(&format!("ts TEST:TEST::{}:{}", bot_ts, top_ts));
-
-    let res_data =res_data_ref.to_owned();
-    
-    let awaited_data =gen_data
-    .iter()
-    .filter(|x| x.t>=Helpers::u64closest_down_divider(&bot_ts, &colec.map.step) && x.t<=Helpers::u64closest_up_divider(&top_ts, &colec.map.step))
-    .map(|x| x).collect::<Vec<&TsPoint>>();
-    assert_eq!(awaited_data.iter().zip(res_data).position(|(x,y)| *x!=y), None, "Testing equality between queried by ts data and stored data");
-
-    let random_batch =  rng.gen_range(0..(colec.map.maxts-colec.map.mints)/colec.map.mints/BATCH_SIZE)+1;
-
-    let res_data = &sys.query_data(&format!("batch TEST:TEST::{}", random_batch));
-    // let ir = sys.parseQueryString(&format!("batch TEST:TEST::{}", random_batch));
-    // let res_data = &colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))[(ir.start_ind as usize)..(ir.end_ind as usize)];
-
-    let awaited_data =&colec.map.get_data(&random_batch, &1);
-    assert_eq!(awaited_data.iter().zip(res_data).position(|(x,y)| x!=y), None, "Testing equality between queried by batch data and stored data");
-
-
+    let res_data_ref = &sys.query_data(&format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts));
+    println!("data queried :{} -> {:?}", &format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts), res_data_ref);
+    println!("minTs :{} maxTs {:?}", colec.map.mints, colec.map.maxts);
 
 
 

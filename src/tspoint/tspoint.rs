@@ -14,13 +14,6 @@ pub struct TsPoint {
 
 
 
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
-pub struct TsPointAggregated {
-    pub step: u64,
-    pub point : TsPoint
-}
-
-
 
 
 
