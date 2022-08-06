@@ -12,6 +12,19 @@ pub struct TsPoint {
     pub data : TsPointData
 }
 
+
+
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub struct TsPointAggregated {
+    pub step: u64,
+    pub point : TsPoint
+}
+
+
+
+
+
+
 impl TsPoint {
 
     fn _create_empty(t:u64) -> Self {
