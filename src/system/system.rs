@@ -86,14 +86,10 @@ impl System {
     fn useIndexResult(&self, ir : &IndexResult) -> (u64, Vec<TsPoint>){
         match &ir.aggregator {
             Some(agreg) => {
-                println!("agreg width {}", agreg.width);
-                println!("ir.colec.map.step {}", ir.colec.map.step);
-                println!("ir.end_batchid {}", ir.end_batchid);
-                println!("ir.start_batchid {}", ir.start_batchid);
                 (agreg.width*ir.colec.map.step, ir.colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))
                 .into_iter()
                 .enumerate()
-                .filter(|(i,x)| i>=&(ir.start_ind as usize) && i<&(ir.end_ind as usize)).map(|(x,y)| y)
+                .filter(|(i,x)| i>=&(ir.start_ind as usize) && i<=&(ir.end_ind as usize)).map(|(x,y)| y)
                 .collect::<Vec<TsPoint>>()
                 .chunks(agreg.width as usize)
                 .map(|x|agreg.aggregate(x))
@@ -103,7 +99,7 @@ impl System {
                 (ir.colec.map.step, ir.colec.map.get_data(&ir.start_batchid, &(ir.end_batchid-ir.start_batchid))
                 .into_iter()
                 .enumerate()
-                .filter(|(i,x)| i>=&(ir.start_ind as usize) && i<&(ir.end_ind as usize)).map(|(x,y)| y)
+                .filter(|(i,x)| i>=&(ir.start_ind as usize) && i<=&(ir.end_ind as usize)).map(|(x,y)| y)
                 .collect::<Vec<TsPoint>>())
             }
         }
@@ -122,7 +118,7 @@ impl System {
                 self.batch_query_string_to_indexresult(&caps[3])
             },
             ("ts", arg) => {
-                self.agg_ts_query_string_to_indexresult(&caps[3], Aggregator::ohlc(&1))
+                self.agg_ts_query_string_to_indexresult(&caps[3], Aggregator::ohlc(&4))
             }
             _ => {panic!("Unrecognized start of query string")}
         }   
@@ -141,16 +137,18 @@ impl System {
             (true, true, true) => {
 
     
-                start_ts = Helpers::u64closest_down_divider(&start_ts, &(colec.map.step));
+                start_ts = Helpers::u64closest_down_divider(&start_ts, &(agg.width*colec.map.step));
                 let x1 = Helpers::u64overflowed_substract(&start_ts,&colec.map.mints,&0)/colec.map.step;
                 let batch_inferior = x1/BATCH_SIZE;
 
-                end_ts = Helpers::u64closest_up_divider(&end_ts, &(colec.map.step));
+                end_ts = Helpers::u64closest_up_divider(&end_ts, &(agg.width*colec.map.step));
                 let x2 = Helpers::u64overflowed_rangefit(&0,&(colec.map.maxts-colec.map.mints), &(end_ts-colec.map.mints))/colec.map.step;
                 let batch_superior = x2/BATCH_SIZE +1;
 
-                IndexResult::create(&(batch_inferior+1),&(x1 - batch_inferior),&x2,&(batch_superior+1), colec, Some(agg))
-            
+
+                IndexResult::create(
+                    &(batch_inferior+1),&(x1 - batch_inferior*BATCH_SIZE),&(x2 - batch_inferior*BATCH_SIZE),&(batch_superior+1), colec, Some(agg)
+                )            
             },
             (false, _, _) => {panic!("Start ts is not superior to end ts")},
             (_, false, _) => {panic!("End ts is inferior to the min timestamp of collection")},
@@ -195,8 +193,10 @@ impl System {
                 let x2 = Helpers::u64overflowed_rangefit(&0,&(colec.map.maxts-colec.map.mints), &(end_ts-colec.map.mints))/colec.map.step;
                 let batch_superior = x2/BATCH_SIZE +1;
 
-                IndexResult::create(&(batch_inferior+1),&(x1 - batch_inferior),&x2,&(batch_superior+1), colec, None)
-            
+                IndexResult::create(
+                    &(batch_inferior+1),&(x1 - batch_inferior*BATCH_SIZE),&(x2 - batch_inferior*BATCH_SIZE),&(batch_superior+1), colec, None
+                )
+                
             },
             (false, _, _) => {panic!("Start ts is not superior to end ts")},
             (_, false, _) => {panic!("End ts is inferior to the min timestamp of collection")},

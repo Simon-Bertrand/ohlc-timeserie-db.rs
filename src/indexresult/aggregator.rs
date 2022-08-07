@@ -7,7 +7,6 @@ pub struct Aggregator{
 }
 
 
-
 fn OHLC_core(width : u64, x : &[TsPoint]) -> TsPoint {
     return TsPoint { 
         t: x[0].t.to_owned(), 

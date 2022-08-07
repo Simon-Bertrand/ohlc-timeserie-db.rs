@@ -3,11 +3,11 @@
     use rand::{prelude::*};
 
 
-    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE, helpers::Helpers};
+    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE, helpers::Helpers, DEFAULT_STEP};
     use rust_decimal::{Decimal, prelude::FromPrimitive};
 
     #[test]
-    fn aggregation_test() {
+    fn ohlc_aggregation_test() {
 
     // Clean the collection TEST if exists and create a new one
     match Collection::create(&OsString::from("TEST"), &OsString::from("TEST")) {
@@ -52,14 +52,39 @@
 
     let mut rng = rand::thread_rng();
 
-    let r1 = rng.gen_range(colec.map.mints..colec.map.maxts);
-    let r2 = rng.gen_range(colec.map.mints..colec.map.maxts);
-    let bot_ts =  min(r1,r2);
-    let top_ts = max(r1,r2);
+    let t1 = rng.gen_range(colec.map.mints..colec.map.maxts);
+    let t2 = rng.gen_range(colec.map.mints..colec.map.maxts);
+    let bot_ts =  min(t1,t2);
+    let top_ts = max(t1,t2);
 
     let res_data_ref = &sys.query_data(&format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts));
     println!("data queried :{} -> {:?}", &format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts), res_data_ref);
     println!("minTs :{} maxTs {:?}", colec.map.mints, colec.map.maxts);
+
+    let aggregator_width = (res_data_ref[1].t-res_data_ref[0].t)/DEFAULT_STEP;
+
+    let mut prec_point : &TsPoint;
+    prec_point = &res_data_ref[0];
+    for point in res_data_ref.iter().skip(1) {
+
+        match (
+            point.t == prec_point.t + aggregator_width*DEFAULT_STEP,
+            prec_point.data.c.unwrap_or(Decimal::from_u64(0).unwrap()) + Decimal::from_u64(DEFAULT_STEP).unwrap() == Decimal::from(point.t),
+            point.data.o.unwrap_or(Decimal::from(0)) == Decimal::from(point.t),
+            point.data.h == point.data.c,
+            point.data.h >= point.data.l )  {
+                (true, true, true, true, true) => {assert_eq!(true, true)},
+                (false,_,_,_,_) => {assert_eq!(false, true, "Testing equality point by point. Failed at point.t == prec_point.t + agg.width*default_step")},
+                (_,false,_,_,_) => {assert_eq!(false, true, "Testing equality point by point. Failed at point.t == prec_point.c + default_step")},
+                (_,_,false,_,_) => {assert_eq!(false, true, "Testing equality point by point. Failed at point.t == point.o")},
+                (_,_,_,false,_) => {assert_eq!(false, true, "Testing equality point by point. Failed at point.h == point.c")},
+                (_,_,_,_,false) => {assert_eq!(false, true, "Testing equality point by point. Failed at point.h > point.l")}
+
+        }
+
+        prec_point=point;
+    }
+
 
 
 
