@@ -1,6 +1,8 @@
 use std::{ffi::OsString};
 
-use timeseries_database::{system::System, collection::Collection, inoutputs::InOutputs};
+use timeseries_database::channels::inoutputs::InOutputs;
+
+
 
 
 fn main() {
@@ -13,8 +15,8 @@ fn main() {
    
     // System::main();
 
-    println!("parsed result : {:?}" ,InOutputs::JsonToTsPoints(r#"[{"t":15, "o":15, "h":158000, "l":512, "c":15 }, {"t":11, "o":15, "h":158000, "l":512, "c":15 }]"#) );
-    println!("readed result : {}" , InOutputs::PointsToJson(&InOutputs::JsonToTsPoints(r#"[{"t":15, "o":15, "h":158000, "l":512, "c":15 }, {"t":11, "o":15, "h":158000, "l":512, "c":15 }]"#)));
+    println!("parsed result : {:?}" ,InOutputs::json_to_points(r#"[{"t":15, "o":15, "h":158000, "l":512, "c":15 }, {"t":11, "o":15, "h":158000, "l":512, "c":15 }]"#) );
+    println!("readed result : {}" , InOutputs::points_to_json(&InOutputs::json_to_points(r#"[{"t":15, "o":15, "h":158000, "l":512, "c":15 }, {"t":11, "o":15, "h":158000, "l":512, "c":15 }]"#)));
 
 
 

@@ -2,9 +2,8 @@
     use std::{ffi::OsString, fs, cmp::{min, max}};
     use rand::{prelude::*};
 
-
-    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE, helpers::Helpers, DEFAULT_STEP, source::Source};
     use rust_decimal::{Decimal, prelude::FromPrimitive};
+    use timeseries_database::{sysutils::{schemaurl::SchemaURL, helpers::Helpers}, system::System, datastruct::{collection::Collection, source::Source, tspoint::{TsPoint, TsPointData}}, MAX_LINE_BLOC, DEFAULT_STEP, BATCH_SIZE};
 
     #[test]
     fn query_string_test() {

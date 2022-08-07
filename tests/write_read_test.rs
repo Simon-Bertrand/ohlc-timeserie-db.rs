@@ -1,8 +1,8 @@
 
     use std::{ffi::OsString, fs};
 
-    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE};
     use rust_decimal::{Decimal, prelude::FromPrimitive};
+    use timeseries_database::{sysutils::schemaurl::SchemaURL, system::System, datastruct::{collection::Collection, source::Source, tspoint::{TsPoint, TsPointData}}, MAX_LINE_BLOC, DEFAULT_STEP, BATCH_SIZE};
 
     #[test]
     fn write_read_test() {

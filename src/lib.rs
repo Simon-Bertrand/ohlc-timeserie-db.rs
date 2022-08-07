@@ -1,18 +1,9 @@
-pub mod bloc;
-pub mod collection;
-pub mod source;
-pub mod indexmap;
+pub mod channels;
+pub mod compression;
+pub mod datastruct;
+pub mod indexing;
 pub mod system;
-pub mod encodemap;
-pub mod filemanager;
-pub mod schemaurl;
-pub mod tspoint;
-pub mod channel;
-pub mod inoutputs;
-pub mod indexresult;
-pub mod helpers;
-
-
+pub mod sysutils;
 
 
 

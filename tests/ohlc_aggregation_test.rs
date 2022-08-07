@@ -3,8 +3,8 @@
     use rand::{prelude::*};
 
 
-    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE, helpers::Helpers, DEFAULT_STEP, source::Source};
     use rust_decimal::{Decimal, prelude::FromPrimitive};
+    use timeseries_database::{sysutils::schemaurl::SchemaURL, system::System, datastruct::{collection::Collection, source::Source, tspoint::{TsPoint, TsPointData}}, MAX_LINE_BLOC, DEFAULT_STEP};
 
     #[test]
     fn ohlc_aggregation_test() {
@@ -57,10 +57,10 @@
     let bot_ts =  min(t1,t2);
     let top_ts = max(t1,t2);
 
-    let res_data_ref = &sys.query_data(&format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts));
-    println!("data queried :{} -> {:?}", &format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts), res_data_ref);
+    let res_data_ref = &sys.query_data(&format!("ts -4m TEST:TEST::{}:{}", bot_ts, top_ts));
+    println!("data queried :{} -> {:?}", &format!("ts -4m TEST:TEST::{}:{}", bot_ts, top_ts), res_data_ref);
     println!("minTs :{} maxTs {:?}", colec.map.mints, colec.map.maxts);
-    
+
     assert_eq!(res_data_ref.len()!=0, true, "Testing if queried data is not empty");
 
     let aggregator_width = (res_data_ref[1].t-res_data_ref[0].t)/DEFAULT_STEP;
@@ -72,7 +72,7 @@
         match (
             point.t == prec_point.t + aggregator_width*DEFAULT_STEP,
             prec_point.data.c.unwrap_or(Decimal::from_u64(0).unwrap()) + Decimal::from_u64(DEFAULT_STEP).unwrap() == Decimal::from(point.t),
-            point.data.o.unwrap_or(Decimal::from(0)) == Decimal::from(point.t),
+            point.data.o.unwrap_or(Decimal::from_u32(0).unwrap()) == Decimal::from(point.t),
             point.data.h == point.data.c,
             point.data.h >= point.data.l )  {
                 (true, true, true, true, true) => {assert_eq!(true, true)},
