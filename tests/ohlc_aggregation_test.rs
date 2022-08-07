@@ -3,7 +3,7 @@
     use rand::{prelude::*};
 
 
-    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE, helpers::Helpers, DEFAULT_STEP};
+    use timeseries_database::{collection::Collection, system::System, tspoint::{TsPointData, TsPoint}, MAX_LINE_BLOC, schemaurl::SchemaURL, BATCH_SIZE, helpers::Helpers, DEFAULT_STEP, source::Source};
     use rust_decimal::{Decimal, prelude::FromPrimitive};
 
     #[test]
@@ -21,7 +21,8 @@
     // Instanciate the system and get the Collection
     let mut sys = System::instanciate();
     let colec : &mut Collection;
-    colec = sys.sources.get_mut(&OsString::from("TEST")).unwrap().colecs.get_mut(&OsString::from("TEST")).unwrap();
+    let mut source : &mut Source = sys.sources.get_mut(&OsString::from("TEST")).unwrap();
+    colec = source.colecs.get_mut(&OsString::from("TEST")).unwrap();
     let mut inserted_count = 0;
     let n_blocs = 5;
     let remainder = 15;
@@ -37,7 +38,6 @@
     l:Some(Decimal::from_u64(x*60).unwrap()),
     o:Some(Decimal::from_u64(x*60).unwrap())
     }} ).collect::<Vec<TsPoint>>();
-
 
 
     // Append generated point to database
@@ -60,6 +60,8 @@
     let res_data_ref = &sys.query_data(&format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts));
     println!("data queried :{} -> {:?}", &format!("ts -d TEST:TEST::{}:{}", bot_ts, top_ts), res_data_ref);
     println!("minTs :{} maxTs {:?}", colec.map.mints, colec.map.maxts);
+    
+    assert_eq!(res_data_ref.len()!=0, true, "Testing if queried data is not empty");
 
     let aggregator_width = (res_data_ref[1].t-res_data_ref[0].t)/DEFAULT_STEP;
 
@@ -88,5 +90,11 @@
 
 
 
+
+    //Deleting the test collection
+    assert_eq!(colec.delete().unwrap(), (), "Testing deletion of test collection");
+
+    //Delete the test source
+    assert_eq!(source.delete(), (), "Testing deleting of source")
 
     }
